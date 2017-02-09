@@ -3,7 +3,7 @@ version:             0.1.0.0
 -- synopsis:
 -- description:
 homepage:            https://github.com/matsubara0507/jsonparser#readme
-license:             BSD3
+license:             MIT
 license-file:        LICENSE
 author:              MATSUBARA Nobutada
 copyright:           2017 MATSUBARA Nobutada
