@@ -2,21 +2,24 @@ module JSON
     ( jsonParser
     ) where
 
-import Data.Char (chr, toUpper)
-import Data.Maybe (fromJust)
-import Data.Text (Text, pack)
-import Text.Megaparsec ( between, count, some, many, oneOf, noneOf, (<|>), sepBy
-                       , space, string, char, digitChar, hexDigitChar)
-import Text.Megaparsec.String (Parser)
+import           Data.Char            (chr, toUpper)
+import           Data.Maybe           (fromJust)
+import           Text.Megaparsec      (Parsec, between, count, many, sepBy,
+                                       (<|>))
+import           Text.Megaparsec.Char (char, digitChar, hexDigitChar, noneOf,
+                                       oneOf, space, string)
 
 type JSON = [(String, JValue)]
+
 data JValue = JNull
-            | JNumber  Double
+            | JNumber Double
             | JString String
             | JBool   Bool
             | JArray  [JValue]
             | JObject JSON
             deriving (Show, Eq)
+
+type Parser = Parsec String String
 
 jsonParser :: Parser JSON
 jsonParser = objectParser
