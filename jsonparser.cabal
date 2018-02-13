@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 47c778eb7d27935e3810567e4b234ad745ad9f6c450cd0f92d9e4cd13b2b83e6
+-- hash: e82e1a631066ac42b59ec237391720733195e764d1c393ad943921d022ffc049
 
 name:           jsonparser
 version:        0.1.0.0
@@ -45,5 +45,21 @@ executable jsonparser
       base >=4.7 && <5
     , jsonparser
   other-modules:
+      Paths_jsonparser
+  default-language: Haskell2010
+
+test-suite test-suite
+  type: exitcode-stdio-1.0
+  main-is: Driver.hs
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , jsonparser
+    , tasty
+    , tasty-hunit
+  other-modules:
+      Test.JSON
       Paths_jsonparser
   default-language: Haskell2010

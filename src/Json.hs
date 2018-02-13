@@ -1,33 +1,39 @@
 module JSON
-    ( parseJson
+    ( JSON
+    , Pair
+    , JValue (..)
+    , parseJson
     , jsonParser
     ) where
 
 import           Data.Char            (chr, toUpper)
 import           Data.Functor         (($>))
 import           Data.Maybe           (fromJust)
-import           Text.Megaparsec      (ParseError, Parsec, between, count, many,
-                                       parse, sepBy, (<|>))
+import           Text.Megaparsec      (ParseError, Parsec, between, count, eof,
+                                       many, runParser, sepBy, some, try, (<|>))
 import           Text.Megaparsec.Char (char, digitChar, hexDigitChar, noneOf,
                                        oneOf, space, string)
 
-type JSON = [(String, JValue)]
+type JSON = JValue
 
-data JValue = JNull
-            | JNumber Double
-            | JString String
-            | JBool   Bool
-            | JArray  [JValue]
-            | JObject JSON
-            deriving (Show, Eq)
+data JValue
+  = JNull
+  | JNumber Double
+  | JString String
+  | JBool   Bool
+  | JObject [Pair]
+  | JArray [JValue]
+  deriving (Show, Eq)
+
+type Pair = (String, JValue)
 
 type Parser = Parsec String String
 
 parseJson :: String -> Either (ParseError Char String) JSON
-parseJson = parse jsonParser ""
+parseJson = runParser (jsonParser <* eof) ""
 
 jsonParser :: Parser JSON
-jsonParser = objectParser
+jsonParser = token valueParser
 
 token :: Parser a -> Parser a
 token p = space *> p <* space
@@ -35,10 +41,10 @@ token p = space *> p <* space
 symbol :: String -> Parser String
 symbol = token . string
 
-objectParser :: Parser JSON
+objectParser :: Parser [Pair]
 objectParser = between (symbol "{") (symbol "}") membersParser
 
-membersParser :: Parser JSON
+membersParser :: Parser [Pair]
 membersParser = pairParser `sepBy` char ','
 
 pairParser :: Parser (String, JValue)
@@ -56,7 +62,7 @@ stringParser :: Parser String
 stringParser = between (string "\"") (string "\"") (many charParser)
 
 charParser :: Parser Char
-charParser = noneOf ['\"', '\\'] <|> (char '\\' *> charParser')
+charParser = noneOf ['\"', '\\', '\t', '\n', '\NUL'] <|> (char '\\' *> charParser')
   where
     charParser' = oneOf ['\"', '\\', '/']
               <|> char 'b' $> '\b'
@@ -64,21 +70,22 @@ charParser = noneOf ['\"', '\\'] <|> (char '\\' *> charParser')
               <|> char 'n' $> '\n'
               <|> char 'r' $> '\r'
               <|> char 't' $> '\t'
-              <|> char 'u' *> (chr . sum . map hex2int <$> count 4 hexDigitChar)
+              <|> char 'u' *> (chr . utf2int <$> count 4 hexDigitChar)
 
-hex2int :: Char -> Int
-hex2int = fromJust . flip lookup hexis . toUpper
+utf2int :: [Char] -> Int
+utf2int = sum . zipWith (*) [4096,256,16,1] . fmap hex2int
   where
+    hex2int = fromJust . flip lookup hexis . toUpper
     hexis = zip "0123456789ABCDEF" [0..]
 
 numberParser :: Parser Double
 numberParser = read <$> numberParser'
   where
-    numberParser' = mappend <$> intParser
-                <*> (fracParser <|> expParser <|> pure "")
+    numberParser' =
+      mappend <$> intParser <*> (try fracParser <|> try expParser <|> pure "")
 
 intParser :: Parser String
-intParser = (:) <$> char '-' <*> intParser' <|> intParser'
+intParser = ((:) <$> char '-' <*> intParser') <|> intParser'
   where
     intParser' = string "0"
              <|> (:) <$> oneOf ['1'..'9'] <*> digitsParser
@@ -86,12 +93,15 @@ intParser = (:) <$> char '-' <*> intParser' <|> intParser'
 digitsParser :: Parser String
 digitsParser = many digitChar
 
+digitsParser' :: Parser String
+digitsParser' = some digitChar
+
 fracParser :: Parser String
-fracParser = mappend <$> ((:) <$> char '.' <*> digitsParser)
+fracParser = mappend <$> ((:) <$> char '.' <*> digitsParser')
                      <*> (expParser <|> pure "")
 
 expParser :: Parser String
-expParser = mappend <$> eParser <*> digitsParser
+expParser = mappend <$> eParser <*> digitsParser'
 
 eParser :: Parser String
 eParser = (:) <$> oneOf ['e', 'E'] <*> (string "+" <|> string "-" <|> pure "")
