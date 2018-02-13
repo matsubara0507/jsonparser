@@ -2,9 +2,8 @@ module Main where
 
 import           JSON
 
-import           Data.Either
 import           System.Environment (getArgs)
-import           Text.Megaparsec    (parse, parseErrorPretty)
+import           Text.Megaparsec    (parse)
 
 main :: IO ()
 main = do
