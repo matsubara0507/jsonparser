@@ -4,6 +4,7 @@ module JSON
     ) where
 
 import           Data.Char            (chr, toUpper)
+import           Data.Functor         (($>))
 import           Data.Maybe           (fromJust)
 import           Text.Megaparsec      (ParseError, Parsec, between, count, many,
                                        parse, sepBy, (<|>))
@@ -58,11 +59,11 @@ charParser :: Parser Char
 charParser = noneOf ['\"', '\\'] <|> (char '\\' *> charParser')
   where
     charParser' = oneOf ['\"', '\\', '/']
-              <|> char 'b' *> pure '\b'
-              <|> char 'f' *> pure '\f'
-              <|> char 'n' *> pure '\n'
-              <|> char 'r' *> pure '\r'
-              <|> char 't' *> pure '\t'
+              <|> char 'b' $> '\b'
+              <|> char 'f' $> '\f'
+              <|> char 'n' $> '\n'
+              <|> char 'r' $> '\r'
+              <|> char 't' $> '\t'
               <|> char 'u' *> (chr . sum . map hex2int <$> count 4 hexDigitChar)
 
 hex2int :: Char -> Int
@@ -77,7 +78,7 @@ numberParser = read <$> numberParser'
                 <*> (fracParser <|> expParser <|> pure "")
 
 intParser :: Parser String
-intParser = ((:) <$> char '-' <*> intParser' <|> intParser')
+intParser = (:) <$> char '-' <*> intParser' <|> intParser'
   where
     intParser' = string "0"
              <|> (:) <$> oneOf ['1'..'9'] <*> digitsParser
