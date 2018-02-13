@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4f17c5ec0c810deaffb1ab1c67bd98c7764c2c70cdb1d60eea2c1b1e638ec58b
+-- hash: 47c778eb7d27935e3810567e4b234ad745ad9f6c450cd0f92d9e4cd13b2b83e6
 
 name:           jsonparser
 version:        0.1.0.0
@@ -44,7 +44,6 @@ executable jsonparser
   build-depends:
       base >=4.7 && <5
     , jsonparser
-    , megaparsec
   other-modules:
       Paths_jsonparser
   default-language: Haskell2010

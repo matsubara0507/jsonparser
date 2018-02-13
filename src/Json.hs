@@ -1,11 +1,12 @@
 module JSON
-    ( jsonParser
+    ( parseJson
+    , jsonParser
     ) where
 
 import           Data.Char            (chr, toUpper)
 import           Data.Maybe           (fromJust)
-import           Text.Megaparsec      (Parsec, between, count, many, sepBy,
-                                       (<|>))
+import           Text.Megaparsec      (ParseError, Parsec, between, count, many,
+                                       parse, sepBy, (<|>))
 import           Text.Megaparsec.Char (char, digitChar, hexDigitChar, noneOf,
                                        oneOf, space, string)
 
@@ -20,6 +21,9 @@ data JValue = JNull
             deriving (Show, Eq)
 
 type Parser = Parsec String String
+
+parseJson :: String -> Either (ParseError Char String) JSON
+parseJson = parse jsonParser ""
 
 jsonParser :: Parser JSON
 jsonParser = objectParser
